@@ -37,8 +37,13 @@ prisma/dev.db-journal
 prisma/*.db
 prisma/*.db-journal
 
-# Uploads (user-generated at runtime)
+# Uploads at runtime — on prod these live on the Railway persistent volume
+# and get seeded from public/_seed/uploads/ on first boot. In dev, they're
+# created fresh by `npm run prepare-runtime`.
 public/uploads/
+
+# Runtime persistence dir (Railway volume mount point in prod)
+persistence/
 
 # Scraper artifacts — regenerable via npm run scrape
 public/images/raw/_manifest.json

@@ -107,12 +107,20 @@ The first build will **fail** — expected. It fails because there's no
 disappear on every redeploy.**
 
 1. In your service → **Settings** → **Volumes** → **New Volume**
-2. Mount path: `/app/data`
+2. Mount path: `/app/public/uploads`
 3. Size: 1 GB is plenty for years of growth (photos are ~200KB each optimized)
 4. Save
 
-The volume persists across restarts and redeploys. Photos go to
-`/app/data/uploads/`, DB to `/app/data/prisma/prod.db`.
+The volume persists across restarts and redeploys. Uploaded photos go there
+directly. On first mount, the boot script (`scripts/prepare-runtime.mjs`)
+copies the initial seed images from `public/_seed/uploads/` in the repo — so
+the site launches with all the scraped work already visible.
+
+For the database, we use a **second** small volume (or a subpath of the same
+volume system — Railway supports both):
+
+1. Add another volume → mount path `/app/persistence`
+2. Size: 100 MB (SQLite DB is tiny)
 
 ### 2.4 Set environment variables
 
@@ -156,11 +164,15 @@ Notes:
 Service → **Settings** → **Deploy** section:
 
 - **Build Command:** `npm run build`
-- **Start Command:** `npx prisma migrate deploy && npm run db:seed && npm run start`
+- **Start Command:** `npm run start`  *(this is the default — no need to override)*
 
-The `migrate deploy` applies any new migrations on every deploy (safe;
-idempotent). The `db:seed` fills the DB on the first deploy — after that it's
-idempotent for admin/categories/settings/services (won't duplicate).
+The `npm run start` script does everything in order:
+1. `prepare-runtime.mjs` — ensures dirs exist, seeds uploads if volume is empty
+2. `prisma migrate deploy` — applies any new schema migrations
+3. `npm run db:seed` — populates DB on first deploy (idempotent — safe to re-run)
+4. `next start` — starts the Next.js server
+
+All four steps are idempotent, so redeploying causes no data loss.
 
 ### 2.6 Redeploy
 

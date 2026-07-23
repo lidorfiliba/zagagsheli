@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start": "node scripts/prepare-runtime.mjs && npx prisma migrate deploy && npm run db:seed && next start",
+    "start:local": "next start",
+    "prepare-runtime": "node scripts/prepare-runtime.mjs",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
