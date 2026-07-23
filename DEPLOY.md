@@ -129,7 +129,7 @@ real values from Phase 0.1):
 
 ```
 NODE_ENV=production
-DATABASE_URL=file:./data/prisma/prod.db
+DATABASE_URL=file:./persistence/prod.db
 AUTH_SECRET=<paste your generated AUTH_SECRET>
 AUTH_URL=https://<your-domain-goes-here>
 AUTH_TRUST_HOST=true
@@ -155,7 +155,7 @@ Notes:
 - `AUTH_URL` should be the Railway URL for now (something like
   `https://zagag-sheli-production.up.railway.app`). Change it to
   `https://zagagsheli.co.il` after the DNS switch in Phase 5.
-- `DATABASE_URL=file:./data/prisma/prod.db` puts the DB inside the mounted
+- `DATABASE_URL=file:./persistence/prod.db` puts the DB inside the mounted
   volume. **Do not change this path** — if you change it after seeding, your
   data is stranded.
 
@@ -397,7 +397,7 @@ the mount path must be exactly `/app/data`.
 
 `DATABASE_URL` isn't pointing inside the volume. The DB got created outside
 the volume and the seed inserted rows referencing `/uploads/...` paths that
-don't exist. Fix: verify `DATABASE_URL=file:./data/prisma/prod.db` in
+don't exist. Fix: verify `DATABASE_URL=file:./persistence/prod.db` in
 Variables, delete the current data volume, redeploy.
 
 ### Uploads succeed but disappear after next deploy
