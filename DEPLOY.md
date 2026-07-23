@@ -106,21 +106,20 @@ The first build will **fail** — expected. It fails because there's no
 **This is the most important step. Without it, all uploads and the database
 disappear on every redeploy.**
 
+**Railway allows only one volume per service**, so both the uploads folder
+and the database live inside one shared volume — the boot script symlinks
+`public/uploads` into the volume automatically.
+
 1. In your service → **Settings** → **Volumes** → **New Volume**
-2. Mount path: `/app/public/uploads`
-3. Size: 1 GB is plenty for years of growth (photos are ~200KB each optimized)
+2. Mount path: `/app/persistent`
+3. Size: 1 GB (plenty for years of photos + a tiny SQLite DB)
 4. Save
 
-The volume persists across restarts and redeploys. Uploaded photos go there
-directly. On first mount, the boot script (`scripts/prepare-runtime.mjs`)
-copies the initial seed images from `public/_seed/uploads/` in the repo — so
-the site launches with all the scraped work already visible.
-
-For the database, we use a **second** small volume (or a subpath of the same
-volume system — Railway supports both):
-
-1. Add another volume → mount path `/app/persistence`
-2. Size: 100 MB (SQLite DB is tiny)
+On first mount, `scripts/prepare-runtime.mjs` creates
+`/app/persistent/uploads/` and `/app/persistent/db/`, symlinks
+`public/uploads` → `persistent/uploads`, and copies seed images from
+`public/_seed/uploads/` (bundled in the repo) — so the site launches with
+all the scraped work already visible.
 
 ### 2.4 Set environment variables
 
@@ -129,7 +128,7 @@ real values from Phase 0.1):
 
 ```
 NODE_ENV=production
-DATABASE_URL=file:./persistence/prod.db
+DATABASE_URL=file:./persistent/db/prod.db
 AUTH_SECRET=<paste your generated AUTH_SECRET>
 AUTH_URL=https://<your-domain-goes-here>
 AUTH_TRUST_HOST=true
@@ -155,7 +154,7 @@ Notes:
 - `AUTH_URL` should be the Railway URL for now (something like
   `https://zagag-sheli-production.up.railway.app`). Change it to
   `https://zagagsheli.co.il` after the DNS switch in Phase 5.
-- `DATABASE_URL=file:./persistence/prod.db` puts the DB inside the mounted
+- `DATABASE_URL=file:./persistent/db/prod.db` puts the DB inside the mounted
   volume. **Do not change this path** — if you change it after seeding, your
   data is stranded.
 
@@ -397,7 +396,7 @@ the mount path must be exactly `/app/data`.
 
 `DATABASE_URL` isn't pointing inside the volume. The DB got created outside
 the volume and the seed inserted rows referencing `/uploads/...` paths that
-don't exist. Fix: verify `DATABASE_URL=file:./persistence/prod.db` in
+don't exist. Fix: verify `DATABASE_URL=file:./persistent/db/prod.db` in
 Variables, delete the current data volume, redeploy.
 
 ### Uploads succeed but disappear after next deploy
