@@ -1,0 +1,179 @@
+// Prisma schema — Postgres-portable (no SQLite-only column types).
+// Runtime uses better-sqlite3 driver adapter (see prisma.config.ts) for dev/VPS.
+// To migrate to Postgres: change `provider = "sqlite"` → `"postgresql"` and
+// set DATABASE_URL to a postgres:// connection string. Then run
+// `npx prisma migrate deploy`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Auth
+// ─────────────────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("admin") // "admin" | "editor" (future)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions Session[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Content
+// ─────────────────────────────────────────────────────────────
+model Category {
+  id       String  @id @default(cuid())
+  slug     String  @unique // e.g. "showers"
+  nameHe   String
+  order    Int     @default(0)
+
+  galleryItems GalleryItem[]
+
+  @@index([order])
+}
+
+model GalleryItem {
+  id         String   @id @default(cuid())
+  categoryId String
+  imagePath  String   // relative URL, e.g. "/uploads/gallery/abc.webp"
+  imageAvif  String?  // sibling AVIF path, if generated
+  blurData   String   // base64 tiny data-URI or blurhash string
+  altHe      String
+  title      String?
+  width      Int      @default(0)
+  height     Int      @default(0)
+  order      Int      @default(0)
+  featured   Boolean  @default(false)
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([categoryId, order])
+  @@index([featured])
+  @@index([published])
+}
+
+model Service {
+  id           String   @id @default(cuid())
+  slug         String   @unique // "showers", "railings", etc.
+  titleHe      String
+  shortDescHe  String
+  longDescHe   String
+  heroImageId  String?
+  seoTitle     String?
+  seoDesc      String?
+  order        Int      @default(0)
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([order])
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  name       String
+  city       String?
+  textHe     String
+  rating     Int      @default(5) // 1..5
+  sourceUrl  String?
+  order      Int      @default(0)
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([order])
+}
+
+model Faq {
+  id         String   @id @default(cuid())
+  questionHe String
+  answerHe   String
+  order      Int      @default(0)
+  published  Boolean  @default(true)
+  serviceSlug String? // optional — subset shown on specific service page
+  createdAt  DateTime @default(now())
+
+  @@index([order])
+  @@index([serviceSlug])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Leads
+// ─────────────────────────────────────────────────────────────
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  city        String?
+  serviceType String   // matches Service.slug or "general"
+  message     String?
+  sourcePage  String   // pathname the lead was submitted from
+  status      String   @default("NEW") // NEW | CONTACTED | QUOTED | WON | LOST
+  notes       String?  // internal admin notes (free-text markdown)
+  isRead      Boolean  @default(false)
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  statusHistory LeadStatusChange[]
+
+  @@index([status])
+  @@index([serviceType])
+  @@index([createdAt])
+  @@index([isRead])
+}
+
+model LeadStatusChange {
+  id        String   @id @default(cuid())
+  leadId    String
+  fromStatus String
+  toStatus  String
+  note      String?
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// About + settings
+// ─────────────────────────────────────────────────────────────
+model AboutPage {
+  id           String   @id @default(cuid())
+  bodyHe       String   // markdown; rendered on public /about
+  ownerPhoto   String?  // path to owner headshot
+  updatedAt    DateTime @updatedAt
+}
+
+// Free-form key/value store for site-wide settings the admin can edit.
+// Keys are namespaced dot-separated: "contact.mobile", "hours.sunday",
+// "whatsapp.template.showers", "analytics.pixel_id", etc.
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

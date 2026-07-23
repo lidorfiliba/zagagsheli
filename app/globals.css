@@ -1,0 +1,132 @@
+/* Fonts first — Tailwind v4 CSS parser is strict about @import order. */
+@import "@fontsource/assistant/400.css";
+@import "@fontsource/assistant/500.css";
+@import "@fontsource/assistant/600.css";
+@import "@fontsource/assistant/700.css";
+@import "@fontsource/assistant/800.css";
+
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────────
+   Design tokens — see DESIGN.md for the reasoning behind each.
+   Semantic names, never raw hex in components.
+   ──────────────────────────────────────────────────────────── */
+@theme {
+  --color-ink: #0B0F14;
+  --color-paper: #F5F7F9;
+  --color-surface: #FFFFFF;
+  --color-line: #E4E9EE;
+  --color-muted: #64707D;
+  /* Accent tokens — pulled from the current zagagsheli.co.il Elementor kit:
+     `--e-global-color-primary: #7D257E` (medium purple, brand primary) and
+     `--e-global-color-accent: #862BB0` (brighter purple, for hovers/emphasis).
+     `#39023A` deep aubergine is available as `--color-accent-alt`.
+     Legacy token name `brass` kept to avoid a codebase-wide rename. */
+  --color-brass: #7D257E;
+  --color-brass-strong: #862BB0;
+  --color-accent-alt: #39023A;
+  --color-danger: #D80000;
+  --color-success: #1F7A5A;
+  --color-whatsapp: #25D366;
+
+  --font-sans: "Assistant", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", "Helvetica Neue", Arial, "Noto Sans Hebrew", sans-serif;
+
+  /* Type scale — matches DESIGN.md */
+  --text-micro: 0.75rem;
+  --text-small: 0.875rem;
+  --text-body: 1rem;
+  --text-body-lg: 1.125rem;
+  --text-h3: 1.25rem;
+  --text-h2-min: 1.5rem;
+  --text-h2-max: 2rem;
+  --text-display-min: 2rem;
+  --text-display-max: 3rem;
+  --text-display-xl-min: 2.75rem;
+  --text-display-xl-max: 4.5rem;
+
+  /* Section rhythm */
+  --space-section-mobile: 5rem;   /* 80px */
+  --space-section-desktop: 8rem;  /* 128px */
+  --container-max: 1200px;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Base
+   ──────────────────────────────────────────────────────────── */
+html, body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Prevent horizontal scroll — critical for RTL where mobile browsers can
+     anchor the initial scroll to the wrong edge if anything overflows. */
+  overflow-x: clip;
+  max-inline-size: 100%;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Every top-level layout region must respect the viewport width. Belt-and-
+   suspenders for any component that might push a decorative element (like
+   the hero's animated light-sweep) beyond the visible area. */
+main, header, footer, section { max-inline-size: 100vw; overflow-x: clip; }
+
+/* Improve line-length for Hebrew body text */
+body {
+  font-size: var(--text-body);
+  line-height: 1.65;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+::selection {
+  background: var(--color-brass);
+  color: var(--color-surface);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Tabular figures for stats and prices — avoids layout shift on hover */
+.tnum { font-feature-settings: "tnum" 1, "kern" 1; }
+
+/* Utility: brass line under a section heading — the signature element */
+.rule-brass {
+  display: block;
+  inline-size: 2.5rem;
+  block-size: 3px;
+  background: var(--color-brass);
+  margin-block-start: 0.75rem;
+}
+
+/* Utility: uppercase micro-eyebrow label */
+.eyebrow {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brass-strong);
+}
+
+/* Respect reduced motion for our custom animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .light-sweep::after { display: none !important; }
+}
+
+/* Hebrew number handling — force LTR for phone numbers embedded in RTL text */
+.ltr-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
