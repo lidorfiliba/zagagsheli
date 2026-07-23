@@ -61,18 +61,32 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* Prevent horizontal scroll — critical for RTL where mobile browsers can
-     anchor the initial scroll to the wrong edge if anything overflows. */
-  overflow-x: clip;
-  max-inline-size: 100%;
 }
 
-html { scroll-behavior: smooth; }
+/* Horizontal-overflow lockdown for RTL mobile.
+   `overflow-x: hidden` (not `clip`) — older mobile Safari respects hidden fully.
+   Explicit width + position: relative give the browser a clear anchor so it
+   doesn't try to allow horizontal scroll based on transformed descendants. */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  width: 100%;
+  overscroll-behavior-x: none;
+}
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+  overscroll-behavior-x: none;
+}
 
-/* Every top-level layout region must respect the viewport width. Belt-and-
-   suspenders for any component that might push a decorative element (like
-   the hero's animated light-sweep) beyond the visible area. */
-main, header, footer, section { max-inline-size: 100vw; overflow-x: clip; }
+/* Top-level layout landmarks — same lockdown, per section. Prevents any
+   decorative absolutely-positioned child (e.g. hero light-sweep) from
+   creating a scrollable virtual area on the ancestor. */
+main, header, footer, section {
+  max-width: 100%;
+  overflow-x: hidden;
+}
 
 /* Improve line-length for Hebrew body text */
 body {
