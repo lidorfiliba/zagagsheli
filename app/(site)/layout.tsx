@@ -1,6 +1,7 @@
 import { Header } from '~/components/public/Header';
 import { Footer } from '~/components/public/Footer';
 import { FloatingWhatsApp } from '~/components/public/FloatingWhatsApp';
+import { AccessibilityWidget } from '~/components/public/AccessibilityWidget';
 import { getSettings } from '~/lib/settings';
 
 export default async function SiteLayout({
@@ -26,6 +27,7 @@ export default async function SiteLayout({
       <main id="main">{children}</main>
       <Footer settings={settings} />
       <FloatingWhatsApp phoneE164={waE164} message={waMessage} />
+      <AccessibilityWidget />
     </>
   );
 }
